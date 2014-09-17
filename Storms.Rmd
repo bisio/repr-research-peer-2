@@ -14,6 +14,7 @@ storms <- read.csv(bzfile("StormData.csv.bz2"))
 ```{r preprocess}
 library(plyr)
 health <- ddply(storms,.(EVTYPE),summarize,tot.fatalities=sum(FATALITIES),tot.injuries=sum(INJURIES))
+health <- arrange(health, desc(tot.fatalities),desc(tot.injuries))
 ```
 
 
