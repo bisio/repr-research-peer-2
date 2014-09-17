@@ -7,7 +7,7 @@ output: html_document
 
 # Data Processing
 
-```{r load_data}
+```{r load_data,cache=TRUE}
 storms <- read.csv(bzfile("StormData.csv.bz2"))
 
 ```
