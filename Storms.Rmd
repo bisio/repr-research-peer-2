@@ -9,6 +9,10 @@ output: html_document
 
 ```{r load_data,cache=TRUE}
 storms <- read.csv(bzfile("StormData.csv.bz2"))
+```
+
+```{r preprocess}
+library(plyr)
 
 ```
 
