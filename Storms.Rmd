@@ -7,15 +7,44 @@ output: html_document
 
 # Data Processing
 
+
+
 ```{r load_data,cache=TRUE}
 storms <- read.csv(bzfile("StormData.csv.bz2"))
 ```
 
-```{r preprocess}
+```{r dependencies}
 library(plyr)
+library(xtable)
+```
+
+
+```{r preprocess}
 health <- ddply(storms,.(EVTYPE),summarize,tot.fatalities=sum(FATALITIES),tot.injuries=sum(INJURIES))
 health <- arrange(health, desc(tot.fatalities),desc(tot.injuries))
 ```
 
 
 # Results
+## Weather events most harmeful to human health (nationwide)
+
+In the following table are reported the 10 most harmful events in USA with respect to population health using as variables total number of fatalities and injuries. 
+
+```{r table1, results='asis'}
+print(xtable(head(health,n=10)),type="html")
+```
+
+```{r geo_health}
+storms.geo.sane <- subset(storms,LONGITUDE >= 5000 & LONGITUDE <= 13000)
+storms.geo.sane$longitude_block <- cut(storms.geo.sane$LONGITUDE,breaks=10)
+health.geo <-  ddply(storms.geo.sane,.(longitude_block,EVTYPE),summarize,tot.fatalities=sum(FATALITIES,na.rm=T),tot.injuries=sum(INJURIES,na.rm=T))
+health.geo.dist <- ddply(health.geo,.(longitude_block),function(df) { 
+        df <- arrange(df,desc(tot.fatalities),desc(tot.injuries))
+        df[1,] })
+```
+
+## Weather events most harmeful to human health (east-west axis distribution)
+```{r table2,results='asis'}
+print(xtable(health.geo.dist),type="html")
+```
+
