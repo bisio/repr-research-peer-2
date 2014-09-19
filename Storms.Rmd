@@ -10,13 +10,13 @@ output: html_document
 
 
 ```{r load_data,cache=TRUE}
-storms <- read.csv(bzfile("StormData.csv.bz2"))
+storms.raw <- read.csv(bzfile("StormData.csv.bz2"))
 ```
 
 We keep only data relevant to questions and we tidy it up:
 
 ```{r reduce,cache=TRUE}
-storms <- subset(storms,T,c("EVTYPE","LONGITUDE","FATALITIES", "INJURIES", "PROPDMG", 
+storms <- subset(storms.raw,T,c("EVTYPE","LONGITUDE","FATALITIES", "INJURIES", "PROPDMG", 
     "PROPDMGEXP", "CROPDMG", "CROPDMGEXP"))
 
 
@@ -33,6 +33,36 @@ library(xtable)
 ```{r preprocess}
 health <- ddply(storms,.(EVTYPE),summarize,tot.fatalities=sum(FATALITIES),tot.injuries=sum(INJURIES))
 health <- arrange(health, desc(tot.fatalities),desc(tot.injuries))
+
+
+storms$PROPDMG[ storms$PROPDMG == "" ] <- 0
+storms$CROPDMG[ storms$CROPDMG == "" ] <- 0
+
+storms$PROPDMGEXP = as.character(storms$PROPDMGEXP)
+storms$CROPDMGEXP = as.character(storms$CROPDMGEXP)
+
+storms$PROPDMGEXP[ storms$PROPDMGEXP == "" ] <- 0
+storms$PROPDMGEXP[ storms$PROPDMGEXP == "+" | storms$PROPDMGEXP == "?" |storms$PROPDMGEXP == "-" | storms$PROPDMGEXP == "1"  ] <- 1
+storms$PROPDMGEXP[ storms$PROPDMGEXP == "h" | storms$PROPDMGEXP == "H"] <- 2
+storms$PROPDMGEXP[ storms$PROPDMGEXP == "k" | storms$PROPDMGEXP == "K"] <- 3
+storms$PROPDMGEXP[ storms$PROPDMGEXP == "m" | storms$PROPDMGEXP == "M"] <- 6
+storms$PROPDMGEXP[ storms$PROPDMGEXP == "b" | storms$PROPDMGEXP == "B"] <- 9
+
+storms$CROPDMGEXP[ storms$CROPDMGEXP == "" ] <- 0
+storms$CROPDMGEXP[ storms$CROPDMGEXP == "+" | storms$CROPDMGEXP == "?" | storms$CROPDMGEXP == "-" | storms$CROPDMGEXP == "1"  ] <- 1
+storms$CROPDMGEXP[ storms$CROPDMGEXP == "h" | storms$CROPDMGEXP == "H"] <- 2
+storms$CROPDMGEXP[ storms$CROPDMGEXP == "k" | storms$CROPDMGEXP == "K"] <- 3
+storms$CROPDMGEXP[ storms$CROPDMGEXP == "m" | storms$CROPDMGEXP == "M"] <- 6
+storms$CROPDMGEXP[ storms$CROPDMGEXP == "b" | storms$CROPDMGEXP == "B"] <- 9
+
+total_damage <- storms$PROPDMG * 10^as.numeric(storms$PROPDMGEXP) + storms$CROPDMG * 10^as.numeric(storms$CROPDMGEXP)
+storms <- cbind(storms, total_damage)
+
+storms.geo.sane <- subset(storms,LONGITUDE >= 5000 & LONGITUDE <= 13000)
+longitude.as.str <- sprintf("%0.5d",storms.geo.sane$LONGITUDE)
+longitude <- as.numeric(substr(longitude.as.str,1,3))
+storms.geo.sane$longitude.bin <- cut(longitude,breaks=10)
+
 ```
 
 
@@ -46,13 +76,6 @@ print(xtable(head(health,n=10),display=c("d","s","d","d")),type="html")
 ```
 
 ```{r geo_health}
-storms.geo.sane <- subset(storms,LONGITUDE >= 5000 & LONGITUDE <= 13000)
-
-longitude.as.str <- sprintf("%0.5d",storms.geo.sane$LONGITUDE)
-longitude <- as.numeric(substr(longitude.as.str,1,3))
-
-
-storms.geo.sane$longitude.bin <- cut(longitude,breaks=10)
 health.geo <-  ddply(storms.geo.sane,.(longitude.bin,EVTYPE),summarize,tot.fatalities=sum(FATALITIES,na.rm=T),tot.injuries=sum(INJURIES,na.rm=T))
 health.geo.dist <- ddply(health.geo,.(longitude.bin),function(df) { 
         df <- arrange(df,desc(tot.fatalities),desc(tot.injuries))
@@ -62,5 +85,21 @@ health.geo.dist <- ddply(health.geo,.(longitude.bin),function(df) {
 ## Weather events most harmeful to human health (east-west axis distribution)
 ```{r table2,results='asis'}
 print(xtable(health.geo.dist,display=c("d","s","s","d","d")),type="html")
+```
+
+## Weather events which have the greatest economic consequences in USA (nationwide)
+```{r table3,results='asis'}
+economy <- ddply(storms,.(EVTYPE),summarize,damage=sum(total_damage))
+economy <- arrange(economy,desc(damage))
+print(xtable(head(economy,n=10)),type="html")
+```
+
+## Weather events which have the greatest economic consequences in USA (east-west axis distribution)
+```{r table4,results='asis'}
+economy.geo <- ddply(storms.geo.sane,.(longitude.bin,EVTYPE),summarize,damage=sum(total_damage))
+economy.geo.dist <- ddply(economy.geo,.(longitude.bin),function(df) { 
+        df <- arrange(df,desc(damage))
+        df[1,] })
+print(xtable(economy.geo.dist),type="html")
 ```
 
