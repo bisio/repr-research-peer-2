@@ -42,7 +42,7 @@ health <- arrange(health, desc(tot.fatalities),desc(tot.injuries))
 In the following table are reported the 10 most harmful events in USA with respect to population health using as variables total number of fatalities and injuries. 
 
 ```{r table1, results='asis'}
-print(xtable(head(health,n=10)),type="html")
+print(xtable(head(health,n=10),display=c("d","s","d","d")),type="html")
 ```
 
 ```{r geo_health}
@@ -61,6 +61,6 @@ health.geo.dist <- ddply(health.geo,.(longitude.bin),function(df) {
 
 ## Weather events most harmeful to human health (east-west axis distribution)
 ```{r table2,results='asis'}
-print(xtable(health.geo.dist),type="html")
+print(xtable(health.geo.dist,display=c("d","s","s","d","d")),type="html")
 ```
 
