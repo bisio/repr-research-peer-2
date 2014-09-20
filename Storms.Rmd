@@ -25,14 +25,16 @@ storms <- subset(storms.raw,T,c("EVTYPE","LONGITUDE","FATALITIES", "INJURIES", "
 
 
 ```{r dependencies}
+library(reshape2)
+library(ggplot2)
 library(plyr)
 library(xtable)
 ```
 
 
 ```{r preprocess}
-health <- ddply(storms,.(EVTYPE),summarize,tot.fatalities=sum(FATALITIES),tot.injuries=sum(INJURIES))
-health <- arrange(health, desc(tot.fatalities),desc(tot.injuries))
+health <- ddply(storms,.(EVTYPE),summarize,deaths=sum(FATALITIES),injuries=sum(INJURIES))
+health <- arrange(health, desc(deaths),desc(injuries))
 
 
 storms$PROPDMG[ storms$PROPDMG == "" ] <- 0
@@ -75,10 +77,19 @@ In the following table are reported the 10 most harmful events in USA with respe
 print(xtable(head(health,n=10),display=c("d","s","d","d")),type="html")
 ```
 
+## Top 10 harmful events for human health 
+```{r fig1}
+top.health <- head(health,n=10)
+top.health <- melt(top.health,id.vars="EVTYPE", variable.name="health.damage",value.name="damage")
+ggplot(top.health, aes(x=EVTYPE,y=damage,fill=health.damage)) + geom_bar(stat="identity") +
+        theme(axis.text.x = element_text(angle=90))
+```
+
+
 ```{r geo_health}
-health.geo <-  ddply(storms.geo.sane,.(longitude.bin,EVTYPE),summarize,tot.fatalities=sum(FATALITIES,na.rm=T),tot.injuries=sum(INJURIES,na.rm=T))
+health.geo <-  ddply(storms.geo.sane,.(longitude.bin,EVTYPE),summarize,deaths=sum(FATALITIES,na.rm=T),injuries=sum(INJURIES,na.rm=T))
 health.geo.dist <- ddply(health.geo,.(longitude.bin),function(df) { 
-        df <- arrange(df,desc(tot.fatalities),desc(tot.injuries))
+        df <- arrange(df,desc(deaths),desc(injuries))
         df[1,] })
 ```
 
@@ -93,6 +104,15 @@ economy <- ddply(storms,.(EVTYPE),summarize,damage=sum(total_damage))
 economy <- arrange(economy,desc(damage))
 print(xtable(head(economy,n=10)),type="html")
 ```
+
+```{r fig2}
+top.economy <- head(economy,n=10)
+ggplot(top.economy,aes(x=EVTYPE,y=damage)) + geom_bar(stat="identity") + 
+        ylab("economic damage") +
+        theme(axis.text.x = element_text(angle=90))
+
+```
+
 
 ## Weather events which have the greatest economic consequences in USA (east-west axis distribution)
 ```{r table4,results='asis'}
