@@ -1,9 +1,21 @@
 ---
-title: "Storms"
+title: "Storms and other weather events impact on human health and economy in the USA"
 author: "Andrea Bisognin"
 date: "09/17/2014"
 output: html_document
 ---
+
+# Synopsis
+
+Storms and other weather events have serious consequences for human health economy.
+We analyzed NOAA Storm Database to investigate wich events are the most harmful.
+For what concerns human health we used as proxy variables number of fatalities and injuries.  we reported the top 10 event types in two tables aggregating data at national or "longitudinal bin" level diving longitude in 10 equally spaced intervals.
+At the national level the biggest threat to human health is tornado but when considering data in longitudinal bins we see how extremes longitudes are spared and other more modest threats are at top position as floods.
+Central regions of are more exposed to tornados and related threats to human life and health.
+For what concerns economy we summed up crop losses and property damage in to a single variable and listed the weather events most detrimental to economy both at national level and aggregating data at "longitudinal bin" level.
+The weather event type with the worst economic consequences flood followed by tornado. 
+Top events and associated economic losses are not equally distributed along the east-west axis with floods hitting extreme longitude positions and tornados hitting the central regions.
+
 
 # Data Processing
 
